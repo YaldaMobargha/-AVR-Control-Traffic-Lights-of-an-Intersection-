@@ -1,0 +1,121 @@
+#include <io.h>
+#include <mega32.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <delay.h>
+char digit_array [2] = {0};
+char sevensegment_array[10] ={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90};
+char enable_cnt = 0;
+char i = 0;
+void show (signed char a);
+void yellow_delay (void);
+
+void main(void)
+{
+char up,right,down,left;
+char up_r , up_g;
+char time;
+char array[2];
+
+//CodeWizard
+
+// USART initialization
+// Communication Parameters: 8 Data, 1 Stop, No Parity
+// USART Receiver: On
+// USART Transmitter: On
+// USART Mode: Asynchronous
+// USART Baud Rate: 9600 (Double Speed Mode)
+UCSRA=(0<<RXC) | (0<<TXC) | (0<<UDRE) | (0<<FE) | (0<<DOR) | (0<<UPE) | (1<<U2X) | (0<<MPCM);
+UCSRB=(0<<RXCIE) | (0<<TXCIE) | (0<<UDRIE) | (1<<RXEN) | (1<<TXEN) | (0<<UCSZ2) | (0<<RXB8) | (0<<TXB8);
+UCSRC=(1<<URSEL) | (0<<UMSEL) | (0<<UPM1) | (0<<UPM0) | (0<<USBS) | (1<<UCSZ1) | (1<<UCSZ0) | (0<<UCPOL);
+UBRRH=0x00;
+UBRRL=0x67;
+
+//CodeWizard END
+
+DDRA=0xFF;
+DDRB=0xFF;
+DDRC=0xFF;
+
+    time=getchar ();
+    if (time=='u')
+    {
+        array [0]=getchar ()-48; 
+        array [1]=getchar ()-48; 
+        up=array [1]+10*array [0];
+    }
+    time=getchar ();
+    if (time=='r')
+    {
+        array [0]=getchar ()-48; 
+        array [1]=getchar ()-48; 
+        right=array [1]+10*array [0];
+    }
+    time=getchar ();
+    if (time=='d')
+    {
+        array [0]=getchar ()-48; 
+        array [1]=getchar ()-48; 
+        down=array [1]+10*array [0];
+    }
+    time=getchar ();
+    if (time=='l')
+    {
+        array [0]=getchar ()-48;
+        array [1]=getchar ()-48; 
+        left=array [1]+10*array [0];
+    }
+
+while (1)
+    {
+        up_g=(up-3);//green
+        PORTC.0=0;
+        PORTC.2=1;
+        show(up_g);//green
+        PORTC.2=0;
+        PORTC.1=1;
+        yellow_delay();//yellow
+        PORTC.1=0;
+        PORTC.0=1;
+        up_r=right+down+left ;//red
+        show(up_r);//red
+    }
+}
+
+void show (signed char a)
+{
+    while (a+1)
+    {
+        digit_array[1] = a%10;
+        digit_array[0] = a/10;
+        for (i=0;i<=50;i++)
+        {
+            PORTB = 1 << enable_cnt;
+            PORTA = sevensegment_array[digit_array[enable_cnt]];
+            enable_cnt++;
+            delay_ms(10);
+
+            if(enable_cnt >= 2)
+            {
+                enable_cnt = 0;
+            }
+        }
+        a--;
+}
+
+}
+void yellow_delay (void)
+{
+    for (i=0;i<=150;i++)
+    {
+        PORTB = 1 << enable_cnt;
+        PORTA = sevensegment_array[0];
+        enable_cnt++;
+        delay_ms(10);
+
+        if(enable_cnt >= 2)
+        {
+            enable_cnt = 0;
+        }
+    }
+}

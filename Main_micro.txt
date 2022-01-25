@@ -1,0 +1,141 @@
+#include <mega324.h>
+#include <io.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <delay.h>
+
+// Declare your global variables here
+
+#define DATA_REGISTER_EMPTY (1<<UDRE0)
+#define RX_COMPLETE (1<<RXC0)
+#define FRAMING_ERROR (1<<FE0)
+#define PARITY_ERROR (1<<UPE0)
+#define DATA_OVERRUN (1<<DOR0)
+
+// Get a character from the USART1 Receiver
+#pragma used+
+char getchar1(void)
+{
+char status,data;
+while (1)
+      {
+      while (((status=UCSR1A) & RX_COMPLETE)==0);
+      data=UDR1;
+      if ((status & (FRAMING_ERROR | PARITY_ERROR | DATA_OVERRUN))==0)
+         return data;
+      }
+}
+#pragma used-
+
+// Write a character to the USART1 Transmitter
+#pragma used+
+void putchar1(char c)
+{
+while ((UCSR1A & DATA_REGISTER_EMPTY)==0);
+UDR1=c;
+}
+#pragma used-
+
+// Standard Input/Output functions
+#include <stdio.h>
+
+char counter_array[2]={0,0};
+void send (char counter)
+{
+
+    sprintf (counter_array,"%i",counter); //counter_array[0]:dahgan counter_array[1]:yekan
+    if(counter<10)
+    {
+        counter_array[1]= counter_array[0];
+        putchar1('0');
+    }
+    else
+    {
+        putchar1(counter_array[0]);
+    }
+    putchar1(counter_array[1]);
+}
+
+void main(void)
+{
+signed char up=-1;
+signed char down=-1;
+signed char left=-1;
+signed char right=-1;
+char time [2];
+
+
+// Crystal Oscillator division factor: 1
+#pragma optsize-
+CLKPR=(1<<CLKPCE);
+CLKPR=(0<<CLKPCE) | (0<<CLKPS3) | (0<<CLKPS2) | (0<<CLKPS1) | (0<<CLKPS0);
+#ifdef _OPTIMIZE_SIZE_
+#pragma optsize+
+#endif
+
+// USART0 initialization
+// Communication Parameters: 8 Data, 1 Stop, No Parity
+// USART0 Receiver: On
+// USART0 Transmitter: On
+// USART0 Mode: Asynchronous
+// USART0 Baud Rate: 9600 (Double Speed Mode)
+UCSR0A=(0<<RXC0) | (0<<TXC0) | (0<<UDRE0) | (0<<FE0) | (0<<DOR0) | (0<<UPE0) | (1<<U2X0) | (0<<MPCM0);
+UCSR0B=(0<<RXCIE0) | (0<<TXCIE0) | (0<<UDRIE0) | (1<<RXEN0) | (1<<TXEN0) | (0<<UCSZ02) | (0<<RXB80) | (0<<TXB80);
+UCSR0C=(0<<UMSEL01) | (0<<UMSEL00) | (0<<UPM01) | (0<<UPM00) | (0<<USBS0) | (1<<UCSZ01) | (1<<UCSZ00) | (0<<UCPOL0);
+UBRR0H=0x00;
+UBRR0L=0x67;
+
+// USART1 initialization
+// Communication Parameters: 8 Data, 1 Stop, No Parity
+// USART1 Receiver: On
+// USART1 Transmitter: On
+// USART1 Mode: Asynchronous
+// USART1 Baud Rate: 9600 (Double Speed Mode)
+UCSR1A=(0<<RXC1) | (0<<TXC1) | (0<<UDRE1) | (0<<FE1) | (0<<DOR1) | (0<<UPE1) | (1<<U2X1) | (0<<MPCM1);
+UCSR1B=(0<<RXCIE1) | (0<<TXCIE1) | (0<<UDRIE1) | (1<<RXEN1) | (1<<TXEN1) | (0<<UCSZ12) | (0<<RXB81) | (0<<TXB81);
+UCSR1C=(0<<UMSEL11) | (0<<UMSEL10) | (0<<UPM11) | (0<<UPM10) | (0<<USBS1) | (1<<UCSZ11) | (1<<UCSZ10) | (0<<UCPOL1);
+UBRR1H=0x00;
+UBRR1L=0x67;
+
+
+    if (up==-1)
+    {
+        putsf ("please enter the time that you want traffic light 'up' to be green and yellow\r");
+        scanf ("%s",time);
+        up=atoi(time);
+
+    }
+
+    if (right==-1)
+    {
+        putsf ("please enter the time that you want traffic light 'right' to be green and yellow\r");
+        scanf ("%s",time);
+        right=atoi(time);
+    }
+
+    if (down==-1)
+    {
+        putsf ("please enter the time that you want traffic light 'down' to be green and yellow\r");
+        scanf ("%s",time);
+        down=atoi(time);
+    }
+
+    if (left==-1)
+    {
+        putsf ("please enter the time that you want traffic light 'left' to be green and yellow\r");
+        scanf ("%s",time);
+        left=atoi(time);
+    }
+
+while (1)
+        {
+        putchar1 ('u');
+        send (up);
+        putchar1 ('r');
+        send (right);
+        putchar1 ('d');
+        send (down);
+        putchar1 ('l');
+        send (left);
+      }
+}
